@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetching JSON Data</title>
+    <!-- Add Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Define black border for the table */
+        table {
+            border-collapse: collapse;
+            border: 2px solid black;
+            margin-top: 20px;
+            margin-left: 20px;
+            width: 100%; /* Make table fill its container */
+        }
+
+        /* Define alternating row colors */
+        tr:nth-child(odd) {
+            background-color: #f2f2f2; /* Lighter color */
+        }
+
+        /* Highlight current month */
+        .current-month {
+            background-color: yellow !important; /* Change to any color you prefer */
+        }
+
+        .next-session {
+            background-color: red !important; /* Change to any color you prefer */
+        }
+    </style>
+</head>
+<body>
+    <div id="data-container" class="container">
+        <!-- JSON data will be displayed here -->
+    </div>
+
+    <div id="current-date-time" class="container">
+        <!-- Current date and time will be displayed here -->
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Add Bootstrap JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch JSON data
+            fetch('https://api.apispreadsheets.com/data/z7Yxhdzqa3RvGL3b/')
+                .then(response => {
+                    // Check if response is successful
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    // Parse JSON response
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the JSON data
+                    renderData(data.data);
+                })
+                .catch(error => {
+                    // Handle errors
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+            
+            // Polish months array
+            const polishMonths = [
+                'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+                'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+            ];
+
+            // Function to find current month based on today's date
+            function findCurrentDay(){
+                const currentDate = new Date();
+                const currentDay = currentDate.getDay(); // Get current month index (0-based)
+                
+                return currentDay;
+            }
+            function findCurrentMonth() {
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth(); // Get current month index (0-based)
+                
+                const currentMonthName = polishMonths[currentMonth]; // Get month name from the array
+                return currentMonthName;
+            }
+
+            // Call function to find current month
+            const currentMonthName = findCurrentMonth();
+            const currentDay = findCurrentDay()
+
+            // Function to render JSON data
+            function renderData(data) {
+                const container = document.getElementById('data-container');
+                // Clear previous data
+                container.innerHTML = '';
+
+                // Create table element
+                const table = document.createElement('table');
+                table.classList.add('table'); // Add Bootstrap table class
+
+                // Create table header row
+                const headerRow = table.createTHead().insertRow(0);
+                // Loop through the keys of the first object to create table headers
+                Object.keys(data[0]).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key;
+                    headerRow.appendChild(th);
+                });
+
+                // Create table body
+                const tbody = table.createTBody();
+                let foundCurrentMonth = false; // Flag to track if current month is found
+                let currentMonthIndex = null; // Index of the current month
+                // Create table rows with data
+                data.forEach((item, index) => {
+                    const row = tbody.insertRow();
+
+
+                    // Loop through each key in the item object and add cell data
+                    Object.entries(item).forEach(([key, value], valueIndex) => {
+                        const cell = row.insertCell();
+                        cell.textContent = value;
+                        // Find the index of the current month
+                        if (key === 'Month' && !foundCurrentMonth && value === currentMonthName) {
+                            foundCurrentMonth = true;
+                            row.classList.add('current-month');
+                        } else if (key === 'Month' && !(value === '' || value === null)){
+                            foundCurrentMonth = false
+                        }
+                    
+                        if (foundCurrentMonth && key === 'Month' && (value === '' || value === null)) {
+                            row.classList.add('current-month');
+                        }
+                        if (key === 'Day' && foundCurrentMonth) {
+                            
+                            console.log("FOUND")
+                        }
+                    });
+
+                    // Apply alternating row colors
+                    /*
+                    if (index % 2 === 1) {
+                        row.classList.add('table-secondary'); // Add Bootstrap class for alternate rows
+                    }
+                    */
+                    
+                });
+
+                // Append the table to the container
+                container.appendChild(table);
+
+                // Update current date and time every second
+                setInterval(updateDateTime, 1000);
+            }
+
+            // Function to update current date and time
+            function updateDateTime() {
+                const currentDateTimeContainer = document.getElementById('current-date-time');
+                const currentDateTime = new Date().toLocaleString();
+                currentDateTimeContainer.textContent = 'Current Date and Time: ' + currentDateTime;
+            }
+        });
+    </script>
+</body>
+</html>
